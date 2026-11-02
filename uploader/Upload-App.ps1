@@ -16,7 +16,14 @@ foreach($name in @('PackName','TargetPath','ExistingPacks','NoPacks','ProjectPat
 }
 $ui.FileList.ItemsSource=$script:selection
 $iconPath=Join-Path $PSScriptRoot 'wallpaper.ico'
-if(Test-Path -LiteralPath $iconPath){$window.Icon=New-Object Windows.Media.Imaging.BitmapImage([uri]$iconPath)}
+if(Test-Path -LiteralPath $iconPath){
+    $iconStream=[IO.File]::Open($iconPath,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::ReadWrite)
+    try{
+        $iconImage=New-Object Windows.Media.Imaging.BitmapImage
+        $iconImage.BeginInit();$iconImage.CacheOption=[Windows.Media.Imaging.BitmapCacheOption]::OnLoad
+        $iconImage.StreamSource=$iconStream;$iconImage.EndInit();$iconImage.Freeze();$window.Icon=$iconImage
+    }finally{$iconStream.Dispose()}
+}
 if(-not ('WallpaperWindowAppearance' -as [type])){
     Add-Type -ReferencedAssemblies @('System.dll',[Windows.Media.ImageSource].Assembly.Location,[Windows.DependencyObject].Assembly.Location) -TypeDefinition @'
 using System;
