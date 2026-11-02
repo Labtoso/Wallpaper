@@ -1,11 +1,12 @@
 <!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#111314">
-  <meta name="description" content="Wallpaper für Desktop und Handy. Echte Fotografien in Originalauflösung, mit Filtern, Merkliste und passenden Bildausschnitten.">
-  <title>Wallpaper — Entdecken</title>
+  <meta name="theme-color" content="#111111">
+  <meta name="description" content="Wallpaper einzeln oder als Pack herunterladen. In voller Auflösung.">
+  <title>Wallpaper</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="gallery.css">
   <script src="app.js" defer></script>
@@ -13,21 +14,47 @@
 <body>
   <a class="skip" href="#sammlung">Zur Sammlung</a>
   <header class="masthead wrap">
-    <a class="wordmark" href="./" aria-label="Wallpaper Startseite"><svg viewBox="0 0 28 28" aria-hidden="true"><rect x="2" y="2" width="10" height="24" rx="2"/><rect x="16" y="2" width="10" height="10" rx="2"/><rect x="16" y="16" width="10" height="10" rx="2"/></svg>wallpaper<span> / </span></a>
-    <nav aria-label="Hauptnavigation"><a href="#sammlung" class="nav-active">Entdecken</a><a href="#ueber">Bildquellen</a></nav>
+    <a class="wordmark" href="./" aria-label="Wallpaper Startseite">wallpaper</a>
+    <nav aria-label="Hauptnavigation"><a href="#sammlung">Sammlung</a><a href="#quellen">Quellen</a></nav>
   </header>
   <main class="wrap">
     <section id="sammlung" class="collection" aria-labelledby="collection-title">
-      <div class="collection-heading"><div><h1 id="collection-title">Entdecken<span id="total">12</span></h1><p>Ein Hintergrund, der zu dir passt.</p></div><button id="shuffle" class="quiet-button"><span aria-hidden="true">⤨</span> Zufälliges Motiv</button></div>
-      <div class="toolbar"><div class="filters" role="group" aria-label="Motive filtern"><button data-filter="Alle" aria-pressed="true">Alle <span>12</span></button><button data-filter="Natur" aria-pressed="false">Natur</button><button data-filter="Architektur" aria-pressed="false">Architektur</button><button data-filter="Details" aria-pressed="false">Details</button><button data-filter="Merkliste" aria-pressed="false">Merkliste <span id="saved-count">0</span></button></div><div class="formats" role="group" aria-label="Vorschauformat"><button data-format="desktop" aria-pressed="true" title="Desktop-Vorschau"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="1"/><path d="M8 21h8m-4-4v4"/></svg><span>Desktop</span></button><button data-format="mobile" aria-pressed="false" title="Handy-Vorschau"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg><span>Mobil</span></button></div></div>
+      <div class="collection-heading">
+        <div><h1 id="collection-title">Alle Wallpaper</h1><span id="collection-count" class="muted"></span></div>
+        <a id="pack-download" class="download-link" download hidden>Alle herunterladen <span aria-hidden="true">↓</span></a>
+      </div>
+      <div class="toolbar">
+        <div id="filters" class="filters" role="group" aria-label="Kategorien"></div>
+        <button id="shuffle" class="text-button" title="Zufälliges Bild öffnen">Zufallsbild <span aria-hidden="true">↗</span></button>
+      </div>
       <p id="result-status" class="sr-only" aria-live="polite"></p>
-      <div id="gallery" class="gallery" aria-busy="true"></div>
-      <div class="collection-end"><span id="visible-count">12 Motive</span><a href="#sammlung">Nach oben ↑</a></div>
+      <div id="gallery" aria-busy="true"></div>
+      <div class="collection-end"><span id="visible-count"></span><a href="#sammlung">Nach oben ↑</a></div>
     </section>
-    <section id="ueber" class="about"><h2>Die Bilder gehören<br>ihren Fotograf:innen.</h2><div><p>Du kannst jedes Motiv in Originalauflösung herunterladen oder als Desktop- und Handy-Ausschnitt speichern. Die Merkliste bleibt in deinem Browser.</p><p class="muted">Fotografien von Unsplash, bereitgestellt über Lorem Picsum. Urheber, Originalquelle und Lizenz stehen bei jedem Bild. Die Bildtitel sind redaktionell gewählt.</p><a class="text-link" href="https://unsplash.com/license" target="_blank" rel="noopener noreferrer">Unsplash-Lizenz ↗</a></div></section>
+    <section id="quellen" class="sources" aria-labelledby="sources-title">
+      <h2 id="sources-title">Quellen</h2>
+      <div><div id="source-links" class="source-links"></div><details><summary>Bildnachweise <span id="source-count"></span></summary><ul id="source-list"></ul></details></div>
+    </section>
   </main>
-  <footer class="wrap"><a href="./">wallpaper /</a><span>Fotografie für Desktop & Mobil</span><span>2026</span></footer>
-  <dialog id="detail" aria-labelledby="detail-title"><div class="detail-top"><span class="mono" id="detail-number"></span><button id="close-detail" class="quiet-button">Schließen <span aria-hidden="true">×</span></button></div><div class="detail-layout"><div class="detail-image"><img id="detail-img" alt=""></div><div class="detail-info"><span class="eyebrow mono" id="detail-category"></span><h2 id="detail-title"></h2><p id="detail-author"></p><dl><div><dt>Original</dt><dd id="detail-size"></dd></div><div><dt>Lizenz</dt><dd><a href="https://unsplash.com/license" target="_blank" rel="noopener noreferrer">Unsplash ↗</a></dd></div></dl><label class="mono" for="download-format">DEIN FORMAT</label><select id="download-format"><option value="original">Original — volle Auflösung</option><option value="desktop">Desktop — 2560 × 1440</option><option value="mobile">Mobil — 1080 × 1920</option></select><p class="crop-note muted">Desktop und Mobil verwenden einen mittigen Ausschnitt. Das Original bleibt vollständig erhalten.</p><button id="download" class="download-button">Wallpaper herunterladen <span>↓</span></button><button id="detail-save" class="save-detail quiet-button">Zur Merkliste hinzufügen +</button><a id="source-link" class="source-link muted" target="_blank" rel="noopener noreferrer">Originalfoto ansehen ↗</a><p id="download-status" role="status"></p></div></div></dialog>
-  <noscript><p class="wrap">Für Filter und Downloads bitte JavaScript aktivieren. Alle Fotografien liegen auch direkt im Ordner assets.</p></noscript>
+  <footer class="wrap"><a href="./">wallpaper</a><span>© <span id="copyright-year">2026</span> Labtoso</span></footer>
+  <dialog id="viewer" aria-labelledby="viewer-title">
+    <header class="viewer-top">
+      <div class="viewer-heading"><h2 id="viewer-title"></h2><span id="viewer-counter" class="muted"></span></div>
+      <div class="viewer-actions">
+        <button id="viewer-save" class="icon-button" aria-label="Bild merken" title="Merken"></button>
+        <button id="viewer-zoom" class="text-button" aria-pressed="false" title="Originalgröße anzeigen">100 %</button>
+        <a id="viewer-download" class="download-link" download aria-label="Bild herunterladen">Herunterladen <span aria-hidden="true">↓</span></a>
+        <button id="viewer-close" class="icon-button close-button" aria-label="Bildansicht schließen" title="Schließen (Esc)">×</button>
+      </div>
+    </header>
+    <div class="viewer-stage">
+      <button id="viewer-prev" class="viewer-arrow previous icon-button" aria-label="Vorheriges Bild" title="Vorheriges Bild (←)">‹</button>
+      <div id="viewer-canvas" class="viewer-canvas"><img id="viewer-image" alt="" draggable="false"><p id="viewer-message" role="status"></p></div>
+      <button id="viewer-next" class="viewer-arrow next icon-button" aria-label="Nächstes Bild" title="Nächstes Bild (→)">›</button>
+    </div>
+    <div class="viewer-caption"><span id="viewer-size" class="muted"></span><div id="viewer-credit"></div></div>
+    <nav id="viewer-thumbs" class="viewer-thumbs" aria-label="Weitere Bilder"></nav>
+  </dialog>
+  <noscript><p class="wrap">Zum Anzeigen der Sammlung bitte JavaScript aktivieren.</p></noscript>
 </body>
 </html>

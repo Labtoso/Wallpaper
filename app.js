@@ -1,59 +1,300 @@
 const $ = selector => document.querySelector(selector);
-const state = {photos:[],filter:'Alle',format:'desktop',selected:null,saved:new Set()};
-try{state.saved=new Set(JSON.parse(localStorage.getItem('still-saved')||'[]'))}catch{}
-const editorial = [
-  [1018,'Grüne Weite','Natur','Ein gewundener Pfad entlang grüner Felsen unter tiefen Wolken'],
-  [1022,'Nordlicht','Natur','Grüne Polarlichter über den Silhouetten dunkler Tannen'],
-  [1076,'Fassade','Architektur','Ein geometrisches Backsteingebäude von unten betrachtet'],
-  [1002,'Von oben','Details','Blaues Meer und goldene Küstenstrukturen in einer NASA-Aufnahme'],
-  [1067,'Abend in der Stadt','Architektur','Eine Skyline im warmen Licht der untergehenden Sonne'],
-  [1015,'Fjord','Natur','Ein tiefblauer Fjord zwischen hellen Felsplateaus'],
-  [1049,'Gezeiten','Natur','Ein dunkler Fels spiegelt sich im stillen Wasser am Strand'],
-  [1043,'Am Wasser','Natur','Ein klarer See vor bewaldeten Felsen und Bergen'],
-  [1016,'Roter Fels','Natur','Warme Abendsonne auf roten Felsformationen'],
-  [1036,'Schneelager','Natur','Gelbe Zelte in einer verschneiten Berglandschaft'],
-  [1040,'Das Schloss','Architektur','Ein helles Schloss vor bewaldeten Berghängen'],
-  [1080,'Rot','Details','Nahaufnahme reifer roter Erdbeeren']
-];
-function persist(){try{localStorage.setItem('still-saved',JSON.stringify([...state.saved]))}catch{}$('#saved-count').textContent=state.saved.size}
-function toggleSave(id){state.saved.has(id)?state.saved.delete(id):state.saved.add(id);persist();render();if(state.selected)updateSaveButton()}
-function render(){
-  const visible=state.photos.filter(p=>state.filter==='Alle'||(state.filter==='Merkliste'?state.saved.has(p.id):p.category===state.filter));
-  const gallery=$('#gallery');gallery.replaceChildren();gallery.classList.toggle('mobile-view',state.format==='mobile');
-  visible.forEach(p=>{
-    const card=document.createElement('article');card.className='card';
-    const open=document.createElement('button');open.className='image-button';open.setAttribute('aria-label',`${p.title} ansehen`);open.onclick=()=>openDetail(p);
-    const img=document.createElement('img');img.src=`assets/${p.id}-thumb.jpg`;img.alt=p.alt;img.loading=p.number<=3?'eager':'lazy';img.width=1000;img.height=700;open.append(img);
-    const info=document.createElement('div');info.className='card-info';
-    const text=document.createElement('div');
-    const title=document.createElement('h3');title.className='card-title';const number=document.createElement('span');number.textContent=String(p.number).padStart(3,'0');title.append(number,document.createTextNode(p.title));
-    const meta=document.createElement('p');meta.className='card-meta';meta.textContent=`${p.width} × ${p.height} · ${p.category}`;text.append(title,meta);
-    const save=document.createElement('button');save.className='save';save.textContent=state.saved.has(p.id)?'♥':'♡';save.setAttribute('aria-label',`${p.title} ${state.saved.has(p.id)?'aus Merkliste entfernen':'merken'}`);save.setAttribute('aria-pressed',String(state.saved.has(p.id)));save.onclick=()=>toggleSave(p.id);info.append(text,save);card.append(open,info);gallery.append(card);
-  });
-  if(!visible.length){const empty=document.createElement('div');empty.className='empty';const title=document.createElement('h3');title.textContent='Platz für deine Favoriten.';const p=document.createElement('p');p.textContent='Mit dem Herz am Bild stellst du deine eigene Sammlung zusammen.';empty.append(title,p);gallery.append(empty)}
-  $('#visible-count').textContent=`${visible.length} Motive · Originalauflösung`;$('#result-status').textContent=`${visible.length} Motive angezeigt`;gallery.setAttribute('aria-busy','false');
-}
-function updateSaveButton(){$('#detail-save').textContent=state.saved.has(state.selected.id)?'Aus der Merkliste entfernen −':'Zur Merkliste hinzufügen +'}
-function openDetail(p){
-  state.selected=p;$('#detail-number').textContent=`WALLPAPER / ${String(p.number).padStart(3,'0')}`;$('#detail-title').textContent=p.title;$('#detail-category').textContent=p.category.toUpperCase();$('#detail-author').textContent=`Fotografie von ${p.author}`;$('#detail-size').textContent=`${p.width} × ${p.height} px`;$('#source-link').href=p.url;$('#detail-img').src=`assets/${p.id}-full.jpg`;$('#detail-img').alt=p.alt;$('#download-format').value=state.format==='mobile'?'mobile':'original';$('#download-status').textContent='';updateSaveButton();updateCrop();$('#detail').showModal();
-}
-function updateCrop(){const mode=$('#download-format').value;const container=$('.detail-image');container.classList.toggle('is-crop',mode!=='original');container.classList.toggle('mobile-crop',mode==='mobile');container.classList.toggle('desktop-crop',mode==='desktop')}
-document.querySelectorAll('[data-filter]').forEach(button=>button.onclick=()=>{state.filter=button.dataset.filter;document.querySelectorAll('[data-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));render()});
-document.querySelectorAll('[data-format]').forEach(button=>button.onclick=()=>{state.format=button.dataset.format;document.querySelectorAll('[data-format]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));render()});
-$('#shuffle').onclick=()=>{if(state.photos.length)openDetail(state.photos[Math.floor(Math.random()*state.photos.length)])};
-$('#close-detail').onclick=()=>$('#detail').close();
-$('#detail').addEventListener('click',e=>{if(e.target===$('#detail')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close()}});
-$('#detail-save').onclick=()=>toggleSave(state.selected.id);$('#download-format').onchange=updateCrop;
-function saveBlob(blob,filename){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
-$('#download').onclick=async()=>{
-  const button=$('#download'),p=state.selected,mode=$('#download-format').value;button.disabled=true;$('#download-status').textContent='Dein Wallpaper wird vorbereitet …';
-  try{
-    const response=await fetch(`assets/${p.id}-full.jpg`);if(!response.ok)throw Error('Bilddatei nicht erreichbar');let blob=await response.blob();
-    if(mode!=='original'){
-      const image=await createImageBitmap(blob);const [w,h]=mode==='mobile'?[1080,1920]:[2560,1440];const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d');if(!ctx)throw Error('Bildformat wird nicht unterstützt');const scale=Math.max(w/image.width,h/image.height);const sw=w/scale,sh=h/scale;ctx.drawImage(image,(image.width-sw)/2,(image.height-sh)/2,sw,sh,0,0,w,h);image.close();blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.95));if(!blob)throw Error('Ausschnitt konnte nicht erzeugt werden');
-    }
-    saveBlob(blob,`Wallpaper-${String(p.number).padStart(3,'0')}-${mode}.jpg`);$('#download-status').textContent='Dein Download wurde gestartet.';
-  }catch(error){$('#download-status').textContent=`Der Download hat nicht geklappt. ${error.message}. Bitte erneut versuchen.`}finally{button.disabled=false}
+const icons = {
+  bookmark: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg>',
+  download: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg>'
 };
-async function init(){try{const response=await fetch('photos.json');if(!response.ok)throw Error('Fotodaten fehlen');const data=await response.json();state.photos=editorial.map(([id,title,category,alt],index)=>{const info=data.find(p=>p.id===String(id));if(!info)throw Error(`Motiv ${id} fehlt`);return{...info,title,category,alt,number:index+1}});persist();render()}catch{$('#gallery').setAttribute('aria-busy','false');$('#gallery').textContent='Die Sammlung konnte nicht geladen werden. Bitte lade die Seite erneut.'}}
-init();
+const state = { catalog: null, filter: 'all', packId: '', saved: new Set(), selected: null, viewerIds: [], zoomed: false };
+let loading = false;
+function updateCopyrightYear() { $('#copyright-year').textContent = new Date().getFullYear(); }
+updateCopyrightYear();
+setInterval(updateCopyrightYear, 60000);
+try { state.saved = new Set(JSON.parse(localStorage.getItem('wallpaper-saved') || localStorage.getItem('still-saved') || '[]')); } catch {}
+
+function element(tag, className, text) {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (text !== undefined) el.textContent = text;
+  return el;
+}
+function safeUrl(value) {
+  try { const url = new URL(value); return ['https:', 'http:'].includes(url.protocol) ? url.href : null; }
+  catch { return null; }
+}
+function size(photo) {
+  return photo.width && photo.height ? photo.width + ' × ' + photo.height : formatBytes(photo.bytes);
+}
+function formatBytes(bytes) {
+  return bytes >= 1024 * 1024 ? (bytes / 1024 / 1024).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(bytes / 1024)) + ' KB';
+}
+function downloadLink(photo, className = 'icon-button') {
+  const a = element('a', className);
+  a.href = photo.src;
+  a.download = photo.filename;
+  a.setAttribute('aria-label', photo.title + ' herunterladen');
+  a.title = 'Original herunterladen';
+  a.innerHTML = icons.download;
+  return a;
+}
+function getVisible() {
+  if (!state.catalog) return [];
+  return state.catalog.photos.filter(photo => state.filter === 'all' ||
+    (state.filter === 'saved' ? state.saved.has(photo.id) : photo.packId === state.packId));
+}
+function toggleSave(id) {
+  if (state.saved.has(id)) state.saved.delete(id); else state.saved.add(id);
+  try { localStorage.setItem('wallpaper-saved', JSON.stringify([...state.saved])); } catch {}
+  if (state.filter === 'saved') render(); else {
+    document.querySelectorAll('[data-save-id]').forEach(button => updateSave(button, button.dataset.saveId));
+    const count = $('#saved-count');
+    if (count) count.textContent = state.catalog.photos.filter(p => state.saved.has(p.id)).length;
+  }
+  if (state.selected) updateSave($('#viewer-save'), state.selected);
+}
+function updateSave(button, id) {
+  const saved = state.saved.has(id);
+  button.setAttribute('aria-pressed', String(saved));
+  button.setAttribute('aria-label', saved ? 'Aus Merkliste entfernen' : 'Bild merken');
+  button.title = saved ? 'Aus Merkliste entfernen' : 'Merken';
+  button.innerHTML = icons.bookmark;
+}
+function renderFilters() {
+  const filters = $('#filters');
+  filters.replaceChildren();
+  function add(label, count, type, id = '') {
+    const button = element('button', '', label);
+    const counter = element('span', '', count);
+    if (type === 'saved') counter.id = 'saved-count';
+    button.append(counter);
+    button.dataset.filter = type;
+    if (type === 'pack') button.dataset.packId = id;
+    button.setAttribute('aria-pressed', String(state.filter === type && (type !== 'pack' || state.packId === id)));
+    button.onclick = () => { state.filter = type; state.packId = id; render(); };
+    filters.append(button);
+  }
+  add('Alle', state.catalog.photos.length, 'all');
+  if (state.catalog.packs.some(p => p.id !== '')) {
+    state.catalog.packs.forEach(pack => add(pack.name, pack.count, 'pack', pack.id));
+  }
+  add('Merkliste', state.catalog.photos.filter(p => state.saved.has(p.id)).length, 'saved');
+}
+function card(photo) {
+  const article = element('article', 'card');
+  const open = element('button', 'image-button');
+  open.setAttribute('aria-label', photo.title + ' ansehen');
+  open.onclick = () => openViewer(photo.id);
+  const image = element('img');
+  image.src = photo.preview; image.alt = photo.alt; image.loading = 'lazy'; image.decoding = 'async';
+  if (photo.width && photo.height) { image.width = photo.width; image.height = photo.height; }
+  open.append(image);
+  const info = element('div', 'card-info');
+  const description = element('div');
+  description.append(element('h3', 'card-title', photo.title), element('p', 'card-meta', size(photo)));
+  const actions = element('div', 'card-actions');
+  const save = element('button', 'icon-button save-button');
+  save.dataset.saveId = photo.id;
+  updateSave(save, photo.id);
+  save.onclick = () => toggleSave(photo.id);
+  actions.append(save, downloadLink(photo));
+  info.append(description, actions);
+  article.append(open, info);
+  return article;
+}
+function render() {
+  const photos = getVisible(), catalog = state.catalog;
+  if (!catalog) return;
+  renderFilters();
+  const selectedPack = catalog.packs.find(p => p.id === state.packId);
+  $('#collection-title').textContent = state.filter === 'saved' ? 'Merkliste' : state.filter === 'pack' ? selectedPack.name : 'Alle Wallpaper';
+  $('#collection-count').textContent = photos.length + (photos.length === 1 ? ' Bild' : ' Bilder');
+  const download = $('#pack-download');
+  download.hidden = state.filter === 'saved' || !photos.length;
+  download.href = state.filter === 'pack' ? selectedPack.archive : catalog.archive;
+  download.download = (state.filter === 'pack' ? selectedPack.name : 'Alle Wallpaper') + '.zip';
+  download.replaceChildren(document.createTextNode(state.filter === 'pack' ? 'Pack herunterladen ' : 'Alle herunterladen '), element('span', '', '↓'));
+  const gallery = $('#gallery');
+  gallery.replaceChildren();
+  const groups = state.filter === 'saved' ? [{ id: 'saved', name: 'Merkliste', count: photos.length }] :
+    catalog.packs.filter(pack => state.filter === 'all' || pack.id === state.packId);
+  for (const pack of groups) {
+    const items = state.filter === 'saved' ? photos : photos.filter(p => p.packId === pack.id);
+    const section = element('section', 'pack-section');
+    if (state.filter === 'all' && groups.length > 1) {
+      const heading = element('div', 'pack-heading');
+      const title = element('h2', '', pack.name); title.append(element('span', '', pack.count));
+      heading.append(title);
+      if (items.length) {
+        const a = element('a', '', 'Pack herunterladen ↓'); a.href = pack.archive; a.download = pack.name + '.zip'; heading.append(a);
+      }
+      section.append(heading);
+    }
+    const grid = element('div', 'image-grid');
+    for (const photo of items) grid.append(card(photo));
+    if (!items.length && state.filter !== 'saved') grid.append(element('p', 'empty', 'In diesem Ordner sind noch keine Bilder.'));
+    section.append(grid); gallery.append(section);
+  }
+  if (!photos.length && state.filter === 'saved') {
+    const empty = element('div', 'empty'); empty.append(element('h3', '', 'Noch nichts gemerkt.'), element('p', '', 'Mit dem Lesezeichen am Bild fügst du es hier hinzu.')); gallery.append(empty);
+  } else if (!groups.length) gallery.append(element('p', 'empty', 'Noch keine Wallpaper vorhanden.'));
+  $('#visible-count').textContent = photos.length + ' Bilder';
+  $('#result-status').textContent = photos.length + ' Bilder angezeigt';
+  gallery.setAttribute('aria-busy', 'false');
+  $('#shuffle').disabled = !photos.length;
+}
+function renderSources() {
+  const known = state.catalog.photos.filter(p => safeUrl(p.url));
+  $('#source-count').textContent = '(' + known.length + ')';
+  const links = $('#source-links'); links.replaceChildren();
+  if (known.some(p => p.legacyId)) {
+    for (const [title, url] of [['Unsplash', 'https://unsplash.com'], ['Lorem Picsum', 'https://picsum.photos'], ['Unsplash-Lizenz', 'https://unsplash.com/license']]) {
+      const a = element('a', '', title + ' ↗'); a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer'; links.append(a);
+    }
+  } else links.append(element('span', '', 'Quellenangaben beim jeweiligen Bild.'));
+  const list = $('#source-list'); list.replaceChildren();
+  for (const photo of known) {
+    const item = element('li'), a = element('a', '', photo.title + (photo.author ? ' — ' + photo.author : '') + ' ↗');
+    a.href = safeUrl(photo.url); a.target = '_blank'; a.rel = 'noopener noreferrer'; item.append(a); list.append(item);
+  }
+}
+function openViewer(id) {
+  state.viewerIds = getVisible().map(p => p.id);
+  showPhoto(id);
+  renderThumbs();
+  if (!$('#viewer').open) $('#viewer').showModal();
+}
+function showPhoto(id) {
+  const photo = state.catalog.photos.find(p => p.id === id);
+  if (!photo) return;
+  state.selected = id;
+  setZoom(false);
+  $('#viewer-title').textContent = photo.title;
+  $('#viewer-counter').textContent = (state.viewerIds.indexOf(id) + 1) + ' / ' + state.viewerIds.length;
+  $('#viewer-size').textContent = size(photo) + ' · ' + formatBytes(photo.bytes);
+  const image = $('#viewer-image');
+  $('#viewer-zoom').disabled = true;
+  $('#viewer-message').textContent = 'Bild wird geladen …';
+  image.hidden = true;
+  image.onload = () => {
+    $('#viewer-zoom').disabled = false;
+    image.hidden = false; $('#viewer-message').textContent = '';
+    if (!photo.width || !photo.height) $('#viewer-size').textContent = image.naturalWidth + ' × ' + image.naturalHeight + ' · ' + formatBytes(photo.bytes);
+  };
+  image.onerror = () => { $('#viewer-message').textContent = 'Das Bild konnte nicht geladen werden.'; };
+  image.alt = photo.alt; image.src = photo.src;
+  $('#viewer-download').href = photo.src; $('#viewer-download').download = photo.filename;
+  $('#viewer-download').setAttribute('aria-label', photo.title + ' herunterladen');
+  updateSave($('#viewer-save'), id);
+  const credit = $('#viewer-credit'); credit.replaceChildren();
+  if (photo.author) credit.append(element('span', '', photo.author));
+  for (const [label, url] of [['Quelle ↗', photo.url], [photo.license ? photo.license + ' ↗' : 'Lizenz ↗', photo.licenseUrl]]) {
+    const safe = safeUrl(url); if (!safe) continue;
+    const a = element('a', '', label); a.href = safe; a.target = '_blank'; a.rel = 'noopener noreferrer'; credit.append(a);
+  }
+  $('#viewer-prev').disabled = $('#viewer-next').disabled = state.viewerIds.length < 2;
+  document.querySelectorAll('#viewer-thumbs button').forEach(button => {
+    button.setAttribute('aria-current', String(button.dataset.photoId === id));
+    if (button.dataset.photoId === id) button.scrollIntoView({ block: 'nearest', inline: 'center' });
+  });
+}
+function renderThumbs() {
+  const thumbs = $('#viewer-thumbs'); thumbs.replaceChildren();
+  for (const id of state.viewerIds) {
+    const photo = state.catalog.photos.find(p => p.id === id); if (!photo) continue;
+    const button = element('button'); button.dataset.photoId = id;
+    button.setAttribute('aria-label', photo.title + ' ansehen'); button.setAttribute('aria-current', String(id === state.selected));
+    const img = element('img'); img.src = photo.preview; img.alt = ''; img.loading = 'lazy';
+    button.append(img); button.onclick = () => showPhoto(id); thumbs.append(button);
+  }
+}
+function navigate(direction) {
+  if (!state.viewerIds.length) return;
+  const index = state.viewerIds.indexOf(state.selected);
+  showPhoto(state.viewerIds[(index + direction + state.viewerIds.length) % state.viewerIds.length]);
+}
+function setZoom(zoomed) {
+  state.zoomed = zoomed;
+  const canvas = $('#viewer-canvas'), image = $('#viewer-image');
+  canvas.classList.toggle('zoomed', zoomed);
+  $('#viewer-zoom').setAttribute('aria-pressed', String(zoomed));
+  $('#viewer-zoom').textContent = zoomed ? 'Einpassen' : '100 %';
+  $('#viewer-zoom').title = zoomed ? 'Ganzes Bild einpassen' : 'Originalgröße anzeigen';
+  image.style.width = zoomed ? image.naturalWidth + 'px' : '';
+  image.style.height = zoomed ? image.naturalHeight + 'px' : '';
+  if (zoomed) requestAnimationFrame(() => {
+    canvas.scrollLeft = Math.max(0, (canvas.scrollWidth - canvas.clientWidth) / 2);
+    canvas.scrollTop = Math.max(0, (canvas.scrollHeight - canvas.clientHeight) / 2);
+  });
+}
+$('#viewer-close').onclick = () => $('#viewer').close();
+$('#viewer').addEventListener('close', () => { setZoom(false); state.selected = null; });
+$('#viewer-save').onclick = () => toggleSave(state.selected);
+$('#viewer-prev').onclick = () => navigate(-1);
+$('#viewer-next').onclick = () => navigate(1);
+$('#viewer-zoom').onclick = () => setZoom(!state.zoomed);
+$('#shuffle').onclick = () => {
+  const photos = getVisible(); if (photos.length) openViewer(photos[Math.floor(Math.random() * photos.length)].id);
+};
+document.addEventListener('keydown', event => {
+  if (!$('#viewer').open || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (['ArrowLeft', 'ArrowRight'].includes(event.key)) { event.preventDefault(); navigate(event.key === 'ArrowLeft' ? -1 : 1); }
+});
+let gesture, suppressClick = false;
+const canvas = $('#viewer-canvas');
+canvas.addEventListener('pointerdown', event => {
+  if (event.button !== 0) return;
+  suppressClick = false;
+  gesture = { x: event.clientX, y: event.clientY, left: canvas.scrollLeft, top: canvas.scrollTop, moved: false };
+});
+canvas.addEventListener('pointermove', event => {
+  if (!gesture || !state.zoomed) return;
+  const dx = event.clientX - gesture.x, dy = event.clientY - gesture.y;
+  if (Math.abs(dx) + Math.abs(dy) > 5) {
+    gesture.moved = true;
+    canvas.classList.add('dragging');
+    if (!canvas.hasPointerCapture(event.pointerId)) canvas.setPointerCapture(event.pointerId);
+  }
+  canvas.scrollLeft = gesture.left - dx; canvas.scrollTop = gesture.top - dy;
+});
+canvas.addEventListener('pointerup', event => {
+  if (!gesture) return;
+  const dx = event.clientX - gesture.x, dy = event.clientY - gesture.y;
+  suppressClick = gesture.moved;
+  if (!state.zoomed && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) { navigate(dx > 0 ? -1 : 1); suppressClick = true; }
+  gesture = null; canvas.classList.remove('dragging');
+});
+canvas.addEventListener('pointercancel', () => { gesture = null; canvas.classList.remove('dragging'); });
+canvas.addEventListener('click', event => {
+  if (suppressClick) { suppressClick = false; return; }
+  if (event.target === $('#viewer-image') || (state.zoomed && event.target === canvas)) setZoom(!state.zoomed);
+});
+
+async function loadCatalog() {
+  if (loading) return;
+  loading = true;
+  try {
+    const response = await fetch('catalog.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('Katalog nicht erreichbar');
+    const catalog = await response.json();
+    if (catalog.version === state.catalog?.version) return;
+    for (const photo of catalog.photos) if (photo.legacyId && state.saved.has(photo.legacyId)) {
+      state.saved.delete(photo.legacyId); state.saved.add(photo.id);
+    }
+    state.catalog = catalog;
+    if (state.filter === 'pack' && !catalog.packs.some(p => p.id === state.packId)) state.filter = 'all';
+    render(); renderSources();
+    if ($('#viewer').open) {
+      state.viewerIds = getVisible().map(p => p.id);
+      if (state.viewerIds.includes(state.selected)) { showPhoto(state.selected); renderThumbs(); }
+      else $('#viewer').close();
+    }
+  } catch {
+    if (!state.catalog) {
+      const error = element('div', 'empty');
+      error.append(element('p', '', 'Die Sammlung konnte nicht geladen werden.'));
+      const retry = element('button', 'text-button', 'Erneut versuchen'); retry.onclick = loadCatalog; error.append(retry);
+      $('#gallery').replaceChildren(error); $('#gallery').setAttribute('aria-busy', 'false');
+    }
+  } finally { loading = false; }
+}
+loadCatalog();
+setInterval(() => { if (!document.hidden) loadCatalog(); }, 8000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) loadCatalog(); });
