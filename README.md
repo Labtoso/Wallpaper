@@ -14,6 +14,27 @@ Unter `http://127.0.0.1:4173` öffnen. Neue Ordner und Bilder werden während de
 
 ## Bilder und Packs hinzufügen
 
+### Mit dem portablen Windows-Programm
+
+1. **Wallpaper Upload.exe** direkt in diesem Projektordner doppelklicken. Die EXE und der Unterordner uploader gehören zusammen; eine Installation ist nicht nötig.
+2. Einen Packnamen eingeben oder ein vorhandenes Pack auswählen.
+3. Bilder, einen ganzen Ordner oder Dateien per Drag-and-drop hinzufügen.
+4. **Hochladen** drücken. Das Programm kopiert die Originale nach assets, erstellt einen Commit als Labtoso und pusht zu diesem Repo. GitHub Pages baut daraus automatisch Kategorien und ZIP-Packs.
+
+Git for Windows und GitHub CLI müssen vorhanden sein; die vorhandene Anmeldung als Labtoso wird genutzt. Das Projekt ist voreingestellt und kann bei Bedarf über „Projekt …“ geändert werden. „Nur lokal hinzufügen“ kopiert ohne Veröffentlichung.
+
+Die 25-MiB-Grenze des GitHub-Web-Uploads entfällt beim Git-Upload; normale GitHub-Repos erlauben bis 100 MiB je Datei. Größere Einzelbilder werden vor dem Kopieren gemeldet, nicht still verkleinert. Ganze Packs dürfen aus vielen Bildern bestehen. [GitHub-Dateilimits](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github)
+
+Vor Veröffentlichungen wird eine lokale Sicherung unter _old erstellt. Unterschiedliche Dateien mit gleichem Namen bekommen einen Zusatz, statt vorhandene Dateien zu überschreiben. Nur ausgewählte Bilder werden committed; fremde vorgemerkte Änderungen bleiben erhalten. Andere lokale, noch nicht veröffentlichte Commits stoppen den Upload mit einer Meldung.
+
+Quellcode und wiederholbarer Windows-Build liegen in uploader. Optional neu bauen:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\uploader\Build-Upload.ps1
+```
+
+### Direkt im Dateisystem
+
 ```text
 assets/
   Wald/
