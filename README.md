@@ -16,12 +16,14 @@ Unter `http://127.0.0.1:4173` öffnen. Neue Ordner und Bilder werden während de
 
 ### Mit dem portablen Windows-Programm
 
-1. **Wallpaper Upload.exe** direkt in diesem Projektordner doppelklicken. Die EXE und der Unterordner uploader gehören zusammen; eine Installation ist nicht nötig.
+1. **Wallpaper Upload.bat** direkt in diesem Projektordner doppelklicken. Der Starter und der Unterordner uploader gehören zusammen; eine Installation ist nicht nötig. Die vorhandene EXE bleibt als zusätzlicher Starter verwendbar.
 2. Einen Packnamen eingeben oder ein vorhandenes Pack auswählen.
 3. Bilder, einen ganzen Ordner oder Dateien per Drag-and-drop hinzufügen.
 4. **Hochladen** drücken. Das Programm kopiert die Originale nach assets, erstellt einen Commit als Labtoso und pusht zu diesem Repo. GitHub Pages baut daraus automatisch Kategorien und ZIP-Packs.
 
-Git for Windows und GitHub CLI müssen vorhanden sein; die vorhandene Anmeldung als Labtoso wird genutzt. Das Projekt ist voreingestellt und kann bei Bedarf über „Projekt …“ geändert werden. „Nur lokal hinzufügen“ kopiert ohne Veröffentlichung.
+Das Fenster nutzt durchgehend Darkmode: links Pack und Projekt, rechts eine Bilderliste mit Vorschauen, unten Upload-Status und Hauptaktion. Die ausführlichen Details sind einklappbar. Dateien lassen sich einzeln aus der Auswahl entfernen; dabei werden keine Originaldateien gelöscht.
+
+Git for Windows und GitHub CLI müssen vorhanden sein; die vorhandene Anmeldung als Labtoso wird genutzt. Das Projekt ist voreingestellt und kann bei Bedarf über „Projekt ändern …“ geändert werden. „Nur lokal hinzufügen“ kopiert ohne Veröffentlichung.
 
 Die 25-MiB-Grenze des GitHub-Web-Uploads entfällt beim Git-Upload; normale GitHub-Repos erlauben bis 100 MiB je Datei. Größere Einzelbilder werden vor dem Kopieren gemeldet, nicht still verkleinert. Ganze Packs dürfen aus vielen Bildern bestehen. [GitHub-Dateilimits](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github)
 
