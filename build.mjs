@@ -6,7 +6,7 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const output = path.join(root, 'dist');
 const staging = path.join(root, '.build-' + process.pid + '-' + Date.now());
 await mkdir(staging);
-for (const file of ['index.html', 'gallery.css', 'app.js', 'favicon.svg']) {
+for (const file of ['index.html', 'gallery.css', 'app.js', 'download-formats.js', 'favicon.svg']) {
   await copyFile(path.join(root, file), path.join(staging, file));
 }
 await cp(path.join(root, 'assets'), path.join(staging, 'assets'), {

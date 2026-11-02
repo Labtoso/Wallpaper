@@ -31,8 +31,9 @@ function downloadLink(photo, className = 'icon-button') {
   a.href = photo.src;
   a.download = photo.filename;
   a.setAttribute('aria-label', photo.title + ' herunterladen');
-  a.title = 'Original herunterladen';
+  a.title = 'Format wählen und herunterladen';
   a.innerHTML = icons.download;
+  a.onclick = event => { event.preventDefault(); openDownload({ photos: [photo], name: photo.title, single: true }); };
   return a;
 }
 function getVisible() {
@@ -110,6 +111,10 @@ function render() {
   download.hidden = state.filter === 'saved' || !photos.length;
   download.href = state.filter === 'pack' ? selectedPack.archive : catalog.archive;
   download.download = (state.filter === 'pack' ? selectedPack.name : 'Alle Wallpaper') + '.zip';
+  download.onclick = event => {
+    event.preventDefault();
+    openDownload({ photos: [...photos], name: state.filter === 'pack' ? selectedPack.name : 'Alle Wallpaper', archive: download.href, packId: state.filter === 'pack' ? selectedPack.id : undefined });
+  };
   download.replaceChildren(document.createTextNode(state.filter === 'pack' ? 'Pack herunterladen ' : 'Alle herunterladen '), element('span', '', '↓'));
   const gallery = $('#gallery');
   gallery.replaceChildren();
@@ -123,7 +128,9 @@ function render() {
       const title = element('h2', '', pack.name); title.append(element('span', '', pack.count));
       heading.append(title);
       if (items.length) {
-        const a = element('a', '', 'Pack herunterladen ↓'); a.href = pack.archive; a.download = pack.name + '.zip'; heading.append(a);
+        const a = element('a', '', 'Pack herunterladen ↓'); a.href = pack.archive; a.download = pack.name + '.zip';
+        a.onclick = event => { event.preventDefault(); openDownload({ photos: [...items], name: pack.name, archive: a.href, packId: pack.id }); };
+        heading.append(a);
       }
       section.append(heading);
     }
@@ -181,6 +188,7 @@ function showPhoto(id) {
   image.onerror = () => { $('#viewer-message').textContent = 'Das Bild konnte nicht geladen werden.'; };
   image.alt = photo.alt; image.src = photo.src;
   $('#viewer-download').href = photo.src; $('#viewer-download').download = photo.filename;
+  $('#viewer-download').onclick = event => { event.preventDefault(); openDownload({ photos: [photo], name: photo.title, single: true }); };
   $('#viewer-download').setAttribute('aria-label', photo.title + ' herunterladen');
   updateSave($('#viewer-save'), id);
   const credit = $('#viewer-credit'); credit.replaceChildren();
@@ -234,7 +242,7 @@ $('#shuffle').onclick = () => {
   const photos = getVisible(); if (photos.length) openViewer(photos[Math.floor(Math.random() * photos.length)].id);
 };
 document.addEventListener('keydown', event => {
-  if (!$('#viewer').open || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (!$('#viewer').open || $('#download-dialog').open || event.altKey || event.ctrlKey || event.metaKey) return;
   if (['ArrowLeft', 'ArrowRight'].includes(event.key)) { event.preventDefault(); navigate(event.key === 'ArrowLeft' ? -1 : 1); }
 });
 let gesture, suppressClick = false;
@@ -266,6 +274,80 @@ canvas.addEventListener('click', event => {
   if (suppressClick) { suppressClick = false; return; }
   if (event.target === $('#viewer-image') || (state.zoomed && event.target === canvas)) setZoom(!state.zoomed);
 });
+
+let downloadRequest, downloadJob;
+function openDownload(request) {
+  if (!request.photos.length) return;
+  if (downloadJob) downloadJob.abort();
+  downloadJob = null;
+  downloadRequest = request;
+  $('#download-description').textContent = request.name + (request.single ? '' : ' · ' + request.photos.length + ' Bilder als ZIP');
+  const photo = request.photos[0];
+  $('#original-description').textContent = request.single ? size(photo) + ' · unverändert' : 'Alle Originaldateien · unverändert';
+  document.querySelector('[name="download-format"][value="original"]').checked = true;
+  document.querySelectorAll('[name="download-format"]').forEach(input => { input.disabled = false; });
+  $('#download-progress').textContent = '';
+  $('#download-confirm').disabled = false;
+  updateDownloadNote();
+  if (!$('#download-dialog').open) $('#download-dialog').showModal();
+}
+function updateDownloadNote() {
+  const format = document.querySelector('[name="download-format"]:checked').value;
+  $('#download-note').textContent = format === 'original' ? 'Die Originaldateien bleiben unverändert.' : 'Mittiger Ausschnitt als JPEG. Das Original bleibt erhalten.';
+}
+function closeDownload() {
+  if (downloadJob) downloadJob.abort();
+  $('#download-dialog').close();
+}
+$('#download-close').onclick = $('#download-cancel').onclick = closeDownload;
+$('#download-dialog').addEventListener('cancel', () => { if (downloadJob) downloadJob.abort(); });
+document.querySelectorAll('[name="download-format"]').forEach(input => { input.onchange = updateDownloadNote; });
+$('#download-confirm').onclick = async () => {
+  if (!downloadRequest || downloadJob) return;
+  const request = downloadRequest;
+  const format = document.querySelector('[name="download-format"]:checked').value;
+  const tools = globalThis.WallpaperDownloads;
+  const job = new AbortController(); downloadJob = job;
+  $('#download-confirm').disabled = true;
+  document.querySelectorAll('[name="download-format"]').forEach(input => { input.disabled = true; });
+  try {
+    if (format === 'original') {
+      tools.saveUrl(request.single ? request.photos[0].src : request.archive, request.single ? request.photos[0].filename : request.name + '.zip');
+    } else {
+      const entries = [], used = new Set();
+      for (let index = 0; index < request.photos.length; index++) {
+        job.signal.throwIfAborted();
+        const photo = request.photos[index];
+        $('#download-progress').textContent = request.single ? 'Dein Bild wird vorbereitet …' : 'Bild ' + (index + 1) + ' von ' + request.photos.length + ' wird vorbereitet …';
+        const response = await fetch(photo.src, { signal: job.signal });
+        if (!response.ok) throw new Error('Bilddatei nicht erreichbar: ' + photo.filename);
+        const blob = await tools.convert(await response.blob(), format);
+        job.signal.throwIfAborted();
+        if (request.single) {
+          tools.save(blob, tools.convertedName(photo.filename, format));
+        } else {
+          const relative = request.packId ? photo.id.slice(request.packId.length + 1) : photo.id;
+          const name = tools.uniqueName(tools.convertedName(relative, format), used);
+          entries.push({ name, bytes: new Uint8Array(await blob.arrayBuffer()) });
+        }
+      }
+      if (!request.single) {
+        job.signal.throwIfAborted();
+        $('#download-progress').textContent = 'ZIP wird zusammengestellt …';
+        tools.save(tools.makeZip(entries), request.name + '-' + format + '.zip');
+      }
+    }
+    $('#download-progress').textContent = 'Download gestartet.';
+  } catch (error) {
+    if (!job.signal.aborted) $('#download-progress').textContent = 'Der Download hat nicht geklappt. ' + error.message + ' Bitte erneut versuchen.';
+  } finally {
+    if (downloadJob === job) {
+      downloadJob = null;
+      $('#download-confirm').disabled = false;
+      document.querySelectorAll('[name="download-format"]').forEach(input => { input.disabled = false; });
+    }
+  }
+};
 
 async function loadCatalog() {
   if (loading) return;

@@ -51,14 +51,14 @@ Für verschachtelte Bilder kann der Schlüssel auch Unterordner/Bild.jpg lauten.
 - Dort auf das Bild klicken: 100-%-Zoom, nochmals klicken: einpassen. Lupe mit Plus/Minus; vergrößerte Bilder lassen sich verschieben.
 - Pfeile oder Pfeiltasten: voriges/nächstes Bild. Auf Mobilgeräten auch wischen.
 - Vorschaustreifen: direkt zu einem Bild wechseln. Esc schließt die Bildansicht.
-- Download am Bild: unveränderte Originaldatei. Pack herunterladen: alle Originale der gewählten Kategorie als ZIP. Alle herunterladen: gesamte Sammlung, mit Ordnerstruktur.
+- Vor jedem Download erscheint die Auswahl Original, Desktop (2560×1440) oder Mobil (1080×1920). Originale bleiben unverändert; Desktop und Mobil werden als mittiger JPEG-Ausschnitt erzeugt. Die Auswahl gilt für einzelne Bilder und ganze ZIP-Packs.
 - Merkliste bleibt ausschließlich in diesem Browser gespeichert.
 - Copyright: © aktuelles Jahr Labtoso; die Jahreszahl aktualisiert sich automatisch.
 
 ## GitHub Pages
 
 ```sh
-node --test tests/catalog.test.mjs
+node --test tests/catalog.test.mjs tests/downloads.test.mjs
 node build.mjs
 ```
 

@@ -9,6 +9,7 @@
   <title>Wallpaper</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="gallery.css">
+  <script src="download-formats.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -54,6 +55,18 @@
     </div>
     <div class="viewer-caption"><span id="viewer-size" class="muted"></span><div id="viewer-credit"></div></div>
     <nav id="viewer-thumbs" class="viewer-thumbs" aria-label="Weitere Bilder"></nav>
+  </dialog>
+  <dialog id="download-dialog" aria-labelledby="download-title">
+    <div class="download-dialog-heading"><h2 id="download-title">Wie herunterladen?</h2><button id="download-close" class="icon-button close-button" aria-label="Formatauswahl schließen">×</button></div>
+    <p id="download-description" class="muted"></p>
+    <fieldset class="download-options"><legend class="sr-only">Downloadformat</legend>
+      <label><input type="radio" name="download-format" value="original" checked><span><strong>Original</strong><small id="original-description">Volle Auflösung · unverändert</small></span></label>
+      <label><input type="radio" name="download-format" value="desktop"><span><strong>Desktop</strong><small>2560 × 1440 · 16:9</small></span><span class="format-outline desktop-outline" aria-hidden="true"></span></label>
+      <label><input type="radio" name="download-format" value="mobile"><span><strong>Mobil</strong><small>1080 × 1920 · 9:16</small></span><span class="format-outline mobile-outline" aria-hidden="true"></span></label>
+    </fieldset>
+    <p id="download-note" class="download-note muted">Die Originaldatei bleibt unverändert.</p>
+    <p id="download-progress" role="status" aria-live="polite"></p>
+    <div class="download-dialog-actions"><button id="download-cancel" class="text-button">Abbrechen</button><button id="download-confirm" class="download-link">Herunterladen ↓</button></div>
   </dialog>
   <noscript><p class="wrap">Zum Anzeigen der Sammlung bitte JavaScript aktivieren.</p></noscript>
 </body>

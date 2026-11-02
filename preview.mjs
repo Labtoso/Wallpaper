@@ -21,7 +21,7 @@ export function startPreview(root, port = 4173) {
         res.setHeader('Content-Type', mime['.json']); res.setHeader('Cache-Control', 'no-store');
         return res.end(JSON.stringify(current));
       }
-      if (['index.html', 'gallery.css', 'app.js', 'favicon.svg'].includes(pathname)) {
+      if (['index.html', 'gallery.css', 'app.js', 'download-formats.js', 'favicon.svg'].includes(pathname)) {
         file = path.join(root, pathname); res.setHeader('Cache-Control', 'no-cache');
       } else {
         const current = catalog || await refresh();
